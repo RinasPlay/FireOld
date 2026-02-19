@@ -13,7 +13,6 @@ namespace FireInspection
         private List<Violation> violations = new List<Violation>();
         private int nextViolationId = 1;
 
-        // ADDED IN TODO 1
         public string Result { get; set; }
 
         public Inspection(int id, Enterprise enterprise, Inspector inspector)
@@ -24,13 +23,16 @@ namespace FireInspection
             InspectionDate = DateTime.Now;
         }
 
-        // Заглушка для TODO 2
-        public void AddViolation(string description, string type, string severity, int daysToFix) { }
+        // ADDED IN TODO 2: реализация метода
+        public void AddViolation(string description, string type, string severity, int daysToFix)
+        {
+            Violation v = new Violation(nextViolationId++, description, type, severity, InspectionDate, daysToFix);
+            violations.Add(v);
+        }
 
-        // Заглушка для TODO 3
+        // Заглушки для TODO 3
         public decimal CalculateSafetyScore() { return 100; }
 
-        // Заглушка для TODO 3
         public void GetViolationStats(out int total, out int critical, out int overdue)
         {
             total = violations.Count;
@@ -45,7 +47,6 @@ namespace FireInspection
             Console.WriteLine($"Проверка №{Id} от {InspectionDate:dd.MM.yyyy}");
             Console.WriteLine($"Предприятие: {Enterprise.Name}");
             Console.WriteLine($"Инспектор: {Inspector.Name}");
-            // ADDED IN TODO 1: вывод результата
             Console.WriteLine($"Результат: {Result ?? "не определен"}");
             Console.WriteLine($"Нарушений выявлено: {violations.Count}");
         }
