@@ -7,8 +7,6 @@ namespace FireInspection
         public string Address { get; set; }
         public int FloorCount { get; set; }
         public int EmployeeCount { get; set; }
-
-        // ADDED IN TODO 1
         public string EnterpriseType { get; set; }
 
         public Enterprise(int id, string name, string address, int floors, int employees, string type)
@@ -17,11 +15,10 @@ namespace FireInspection
             Name = name;
             Address = address;
 
-            // TODO 2 будет добавлен позже (проверки)
-            FloorCount = floors;
-            EmployeeCount = employees;
+            // ADDED IN TODO 2: проверки
+            FloorCount = floors < 1 ? 1 : floors;
+            EmployeeCount = employees < 0 ? 0 : employees;
 
-            // ADDED IN TODO 1: сохраняем тип
             EnterpriseType = type;
         }
 
