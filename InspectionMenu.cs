@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq; // ADDED IN TODO 2
+using System.Linq;
 
 namespace FireInspection
 {
@@ -34,17 +34,13 @@ namespace FireInspection
             foreach (var e in enterprises)
             {
                 Console.WriteLine($"ID: {e.Id}");
-                Console.WriteLine($"Название: {e.Name}");
-                Console.WriteLine($"Адрес: {e.Address}");
-                Console.WriteLine($"Этажей: {e.FloorCount}");
-                Console.WriteLine($"Сотрудников: {e.EmployeeCount}");
-                Console.WriteLine($"Тип: {e.EnterpriseType}");
+                // ADDED IN TODO 3: используем переопределённый ToString
+                Console.WriteLine(e.ToString());
                 Console.WriteLine($"Категория риска: {e.GetRiskCategory()}");
                 Console.WriteLine(new string('-', 30));
             }
         }
 
-        // ADDED IN TODO 2: реализация ConductInspection
         public void ConductInspection()
         {
             Console.WriteLine("=== ПРОВЕДЕНИЕ ПРОВЕРКИ ===");
@@ -86,75 +82,186 @@ namespace FireInspection
                 Console.WriteLine("Нарушение добавлено.");
             }
 
+            // ADDED IN TODO 3: определение результата проверки
+            int violCount = inspection.GetViolations().Count;
+            if (violCount == 0)
+            {
+                inspection.Result = "Соответствует";
+            }
+            else
+            {
+                decimal score = inspection.CalculateSafetyScore();
+                if (score >= 80)
+                    inspection.Result = "С нарушениями (незначительные)";
+                else if (score >= 50)
+                    inspection.Result = "С нарушениями (значительные)";
+                else
+                    inspection.Result = "Не соответствует";
+            }
+
+            Console.WriteLine($"\nРезультат проверки: {inspection.Result}");
+            Console.WriteLine($"Оценка безопасности: {inspection.CalculateSafetyScore()}");
+
             inspections.Add(inspection);
             selectedInspector.AddInspection(inspection);
 
-            Console.WriteLine($"\nПроверка завершена. Добавлено нарушений: {inspection.GetViolations().Count}");
+            Console.WriteLine("Проверка завершена и сохранена.");
         }
 
-        // Заглушки для TODO 3
-        public void MonitorViolations() { Console.WriteLine("Мониторинг нарушений (заглушка)"); }
-        public void MarkViolationAsFixed() { Console.WriteLine("Отметка устранения (заглушка)"); }
+        // ADDED IN TODO 3: реализация MonitorViolations
+        public void MonitorViolations()
+        {
+            Console.WriteLine("=== МОНИТОРИНГ НАРУШЕНИЙ ===");
+
+            foreach (var enterprise in enterprises)
+            {
+                var entInspections = inspections.Where(i => i.Enterprise.Id == enterprise.Id).ToList();
+
+                if (entInspections.Count == 0)
+                {
+                    Console.WriteLine($"Предприятие {enterprise.Name} - проверок не проводилось");
+                    continue;
+                }
+
+                int totalViolations = 0;
+                int overdueViolations = 0;
+                decimal totalSafety = 0;
+
+                foreach (var insp in entInspections)
+                {
+                    insp.GetViolationStats(out int total, out int critical, out int overdue);
+                    totalViolations += total;
+                    overdueViolations += overdue;
+                    totalSafety += insp.CalculateSafetyScore();
+                }
+
+                decimal avgSafety = totalSafety / entInspections.Count;
+
+                Console.WriteLine($"Предприятие: {enterprise.Name}");
+                Console.WriteLine($"  Всего нарушений: {totalViolations}");
+                Console.WriteLine($"  Просроченных: {overdueViolations}");
+                Console.WriteLine($"  Средний балл безопасности: {avgSafety:F2}");
+                Console.WriteLine();
+            }
+
+            Console.WriteLine("--- Статистика инспекторов ---");
+            foreach (var inspector in inspectors)
+            {
+                inspector.GetWorkStats(out int totalInsp, out int totalViol, out decimal avgScore);
+                Console.WriteLine($"Инспектор {inspector.Name}: проверок {totalInsp}, нарушений {totalViol}, активных нарушений {inspector.GetActiveViolationsCount()}, средний балл {avgScore:F2}");
+            }
+        }
+
+        // ADDED IN TODO 3: реализация MarkViolationAsFixed
+        public void MarkViolationAsFixed()
+        {
+            Console.WriteLine("=== УСТРАНЕНИЕ НАРУШЕНИЯ ===");
+
+            Enterprise selectedEnterprise = SelectEnterprise();
+            if (selectedEnterprise == null) return;
+
+            var entInspections = inspections.Where(i => i.Enterprise.Id == selectedEnterprise.Id).ToList();
+            if (entInspections.Count == 0)
+            {
+                Console.WriteLine("У этого предприятия нет проверок.");
+                return;
+            }
+
+            List<Violation> activeViolations = new List<Violation>();
+            foreach (var insp in entInspections)
+            {
+                activeViolations.AddRange(insp.GetViolations().Where(v => !v.IsFixed));
+            }
+
+            if (activeViolations.Count == 0)
+            {
+                Console.WriteLine("Нет активных нарушений.");
+                return;
+            }
+
+            Console.WriteLine("Активные нарушения:");
+            for (int i = 0; i < activeViolations.Count; i++)
+            {
+                var v = activeViolations[i];
+                Console.WriteLine($"{i + 1}. {v.Description} (серьезность: {v.Severity}, срок: {v.FixDeadline:dd.MM.yyyy})");
+            }
+
+            Console.Write("Выберите номер нарушения для отметки как устраненного: ");
+            if (!int.TryParse(Console.ReadLine(), out int choice) || choice < 1 || choice > activeViolations.Count)
+            {
+                Console.WriteLine("Неверный выбор.");
+                return;
+            }
+
+            activeViolations[choice - 1].MarkAsFixed();
+            Console.WriteLine("Нарушение отмечено как устраненное.");
+        }
 
         public void ShowMainMenu()
         {
-            // ... (без изменений) ...
+            bool running = true;
+
+            while (running)
+            {
+                Console.Clear();
+                Console.WriteLine("=== ПОЖАРНАЯ ИНСПЕКЦИЯ 'ОГНЕЩИТ' ===");
+                Console.WriteLine("1. База предприятий");
+                Console.WriteLine("2. Провести проверку");
+                Console.WriteLine("3. Мониторинг нарушений");
+                Console.WriteLine("4. Отметить устранение");
+                Console.WriteLine("5. Статистика инспекции");
+                Console.WriteLine("6. Выход");
+                Console.Write("Выберите: ");
+
+                string choice = Console.ReadLine();
+
+                switch (choice)
+                {
+                    case "1": ShowEnterprises(); break;
+                    case "2": ConductInspection(); break;
+                    case "3": MonitorViolations(); break;
+                    case "4": MarkViolationAsFixed(); break;
+                    case "5": ShowInspectionStats(); break;
+                    case "6": running = false; break;
+                    default: Console.WriteLine("Неверный выбор!"); break;
+                }
+
+                if (running && choice != "6")
+                {
+                    Console.WriteLine("\nНажмите Enter...");
+                    Console.ReadLine();
+                }
+            }
         }
 
+        // ADDED IN TODO 3: доработан подсчёт активных нарушений
         private void ShowInspectionStats()
         {
-            // ... (без изменений) ...
+            Console.WriteLine("=== СТАТИСТИКА ИНСПЕКЦИИ ===");
+            Console.WriteLine($"Всего предприятий: {enterprises.Count}");
+            Console.WriteLine($"Всего проверок: {inspections.Count}");
+
+            int totalViolations = 0;
+            int activeViolations = 0;
+
+            foreach (var inspection in inspections)
+            {
+                totalViolations += inspection.GetViolations().Count;
+                activeViolations += inspection.GetViolations().Count(v => !v.IsFixed);
+            }
+
+            Console.WriteLine($"Всего нарушений: {totalViolations}");
+            Console.WriteLine($"Активных нарушений: {activeViolations}");
         }
 
-        // ADDED IN TODO 2: вспомогательные методы выбора
         private Enterprise SelectEnterprise()
         {
-            if (enterprises.Count == 0)
-            {
-                Console.WriteLine("Нет предприятий в базе.");
-                return null;
-            }
-
-            Console.WriteLine("Список предприятий:");
-            foreach (var e in enterprises)
-                Console.WriteLine($"{e.Id}. {e.Name}");
-
-            Console.Write("Выберите ID предприятия: ");
-            if (!int.TryParse(Console.ReadLine(), out int id))
-            {
-                Console.WriteLine("Неверный ввод.");
-                return null;
-            }
-
-            var selected = enterprises.FirstOrDefault(e => e.Id == id);
-            if (selected == null)
-                Console.WriteLine("Предприятие не найдено.");
-            return selected;
+            // ... без изменений ...
         }
 
         private Inspector SelectInspector()
         {
-            if (inspectors.Count == 0)
-            {
-                Console.WriteLine("Нет инспекторов.");
-                return null;
-            }
-
-            Console.WriteLine("Список инспекторов:");
-            foreach (var i in inspectors)
-                Console.WriteLine($"{i.Id}. {i.Name} ({i.Rank})");
-
-            Console.Write("Выберите ID инспектора: ");
-            if (!int.TryParse(Console.ReadLine(), out int id))
-            {
-                Console.WriteLine("Неверный ввод.");
-                return null;
-            }
-
-            var selected = inspectors.FirstOrDefault(i => i.Id == id);
-            if (selected == null)
-                Console.WriteLine("Инспектор не найден.");
-            return selected;
+            // ... без изменений ...
         }
     }
 }
