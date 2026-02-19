@@ -9,7 +9,6 @@ namespace FireInspection
         public DateTime DetectionDate { get; set; }
         public DateTime FixDeadline { get; set; }
 
-        // ADDED IN TODO 1
         public string ViolationType { get; set; }
         public string Severity { get; set; }
 
@@ -21,19 +20,24 @@ namespace FireInspection
             Id = id;
             Description = description;
             DetectionDate = detectionDate;
-
-            // ADDED IN TODO 1: сохраняем тип и серьёзность
             ViolationType = type;
             Severity = severity;
-
-            // TODO 3 будет добавлен позже
-            // FixDeadline = DetectionDate.AddDays(daysToFix); // пока не реализовано
-
+            // FixDeadline пока не устанавливаем (TODO 3)
             IsFixed = false;
         }
 
-        // Заглушка для TODO 2
-        public int GetFixPriority() { return 1; }
+        // ADDED IN TODO 2: реализация приоритета (с заглушкой IsOverdue)
+        public int GetFixPriority()
+        {
+            bool overdue = IsOverdue(); // пока всегда false
+
+            if (Severity.Equals("критическое", StringComparison.OrdinalIgnoreCase))
+                return overdue ? 1 : 2;
+            if (Severity.Equals("значительное", StringComparison.OrdinalIgnoreCase))
+                return overdue ? 2 : 3;
+            // незначительное
+            return overdue ? 3 : 4;
+        }
 
         // Заглушка для TODO 3
         public bool IsOverdue() { return false; }
