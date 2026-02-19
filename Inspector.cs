@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq; // ADDED IN TODO 3 для LINQ
 
 namespace FireInspection
 {
@@ -12,21 +13,39 @@ namespace FireInspection
 
         private List<Inspection> conductedInspections = new List<Inspection>();
 
-        // ADDED IN TODO 2: реализация метода
         public void AddInspection(Inspection inspection)
         {
             conductedInspections.Add(inspection);
         }
 
-        // Заглушки для TODO 3
+        // ADDED IN TODO 3: реализация статистики
         public void GetWorkStats(out int totalInspections, out int totalViolations, out decimal avgSafetyScore)
         {
             totalInspections = conductedInspections.Count;
             totalViolations = 0;
             avgSafetyScore = 0;
+
+            if (totalInspections == 0) return;
+
+            decimal sumSafety = 0;
+            foreach (var insp in conductedInspections)
+            {
+                totalViolations += insp.GetViolations().Count;
+                sumSafety += insp.CalculateSafetyScore();
+            }
+            avgSafetyScore = sumSafety / totalInspections;
         }
 
-        public int GetActiveViolationsCount() { return 0; }
+        // ADDED IN TODO 3: реализация подсчёта активных нарушений
+        public int GetActiveViolationsCount()
+        {
+            int count = 0;
+            foreach (var insp in conductedInspections)
+            {
+                count += insp.GetViolations().Count(v => !v.IsFixed);
+            }
+            return count;
+        }
 
         public void ShowInspectorInfo()
         {
