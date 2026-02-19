@@ -14,16 +14,16 @@ namespace FireInspection
             Id = id;
             Name = name;
             Address = address;
-
-            // ADDED IN TODO 2: проверки
             FloorCount = floors < 1 ? 1 : floors;
             EmployeeCount = employees < 0 ? 0 : employees;
-
             EnterpriseType = type;
         }
 
-        // Заглушка для TODO 3
-        public override string ToString() { return Name; }
+        // ADDED IN TODO 3: информативное строковое представление
+        public override string ToString()
+        {
+            return $"{Name} ({EnterpriseType}) - {Address}, {FloorCount} этажей, {EmployeeCount} сотрудников";
+        }
 
         public string GetRiskCategory()
         {
@@ -32,4 +32,4 @@ namespace FireInspection
             return "Низкая";
         }
     }
-}
+}   
