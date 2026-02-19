@@ -23,21 +23,42 @@ namespace FireInspection
             InspectionDate = DateTime.Now;
         }
 
-        // ADDED IN TODO 2: реализация метода
         public void AddViolation(string description, string type, string severity, int daysToFix)
         {
             Violation v = new Violation(nextViolationId++, description, type, severity, InspectionDate, daysToFix);
             violations.Add(v);
         }
 
-        // Заглушки для TODO 3
-        public decimal CalculateSafetyScore() { return 100; }
+        // ADDED IN TODO 3: расчёт балла безопасности
+        public decimal CalculateSafetyScore()
+        {
+            if (violations.Count == 0) return 100;
 
+            int criticalCount = 0;
+            foreach (var v in violations)
+            {
+                if (v.Severity.Equals("критическое", StringComparison.OrdinalIgnoreCase))
+                    criticalCount++;
+            }
+
+            int score = 100 - (violations.Count * 10) - (criticalCount * 20);
+            return score < 0 ? 0 : score;
+        }
+
+        // ADDED IN TODO 3: статистика по нарушениям
         public void GetViolationStats(out int total, out int critical, out int overdue)
         {
             total = violations.Count;
             critical = 0;
             overdue = 0;
+
+            foreach (var v in violations)
+            {
+                if (v.Severity.Equals("критическое", StringComparison.OrdinalIgnoreCase))
+                    critical++;
+                if (v.IsOverdue())
+                    overdue++;
+            }
         }
 
         public List<Violation> GetViolations() { return violations; }
