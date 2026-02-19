@@ -22,25 +22,29 @@ namespace FireInspection
             DetectionDate = detectionDate;
             ViolationType = type;
             Severity = severity;
-            // FixDeadline пока не устанавливаем (TODO 3)
+
+            // ADDED IN TODO 3: установка срока устранения
+            FixDeadline = DetectionDate.AddDays(daysToFix);
+
             IsFixed = false;
         }
 
-        // ADDED IN TODO 2: реализация приоритета (с заглушкой IsOverdue)
         public int GetFixPriority()
         {
-            bool overdue = IsOverdue(); // пока всегда false
+            bool overdue = IsOverdue();
 
             if (Severity.Equals("критическое", StringComparison.OrdinalIgnoreCase))
                 return overdue ? 1 : 2;
             if (Severity.Equals("значительное", StringComparison.OrdinalIgnoreCase))
                 return overdue ? 2 : 3;
-            // незначительное
             return overdue ? 3 : 4;
         }
 
-        // Заглушка для TODO 3
-        public bool IsOverdue() { return false; }
+        // ADDED IN TODO 3: реализация проверки просрочки
+        public bool IsOverdue()
+        {
+            return !IsFixed && DateTime.Now > FixDeadline;
+        }
 
         public void MarkAsFixed()
         {
